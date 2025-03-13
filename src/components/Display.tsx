@@ -5,10 +5,11 @@ import { createContext, Dispatch, JSX, SetStateAction, useContext, useEffect, us
 const TextContext =  createContext(new Map<number,Dispatch<SetStateAction<string>>>()) //Map renderer
 export function Display(){
     const manager = new Map<number,Dispatch<SetStateAction<string>>>()
+    const sample = "hello world"
     return(
         <TextContext.Provider value={manager}>
-            <GenerateText text="hello world"/>
-            <TextInput></TextInput>
+            <GenerateText text={sample}/>
+            <TextInput text ={sample}></TextInput>
         </TextContext.Provider>
     )
 }
@@ -51,7 +52,7 @@ function GenerateText({text}:{text:string}){
         {elements}
     </div>
 }
-function TextInput(){
+function TextInput({text}:{text:string}){
     const textContext = useContext(TextContext);
     let count = 0
     return(
