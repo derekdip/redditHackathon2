@@ -2,10 +2,12 @@
 
 import { createContext, Dispatch, JSX, RefObject, SetStateAction, useContext, useEffect, useRef, useState } from "react"
 import { HorizontalScroll } from "./Carousel"
+import { TimerView } from "./Timer"
 
 export type IOHandler={
     text: Map<number, Dispatch<SetStateAction<string>>>,
     slider?: RefObject<HTMLDivElement | null>
+    timerColor?: RefObject<string | null>
 }
 export const IOContext =  createContext<IOHandler>({text:new Map<number,Dispatch<SetStateAction<string>>>()}) 
 
@@ -13,10 +15,12 @@ export const IOContext =  createContext<IOHandler>({text:new Map<number,Dispatch
 export function Display(){
     const text = new Map<number,Dispatch<SetStateAction<string>>>()
     const slider =  useRef<HTMLDivElement | null>(null);
-    const IO:IOHandler = {text,slider}
+    const timerColor = useRef("red") //only use refs at this level bc useStates will cause re-renders
+    const IO:IOHandler = {text,slider,timerColor}
     const sample = "   Lorem ipsum l lll ll dolor sit amet consectetur adipisicing elit. Ipsum excepturi impedit aspernatur aliquam. Harum, aliquid! Quos unde in quaerat? Enim expedita nobis veniam eligendi, vitae quas neque officiis corporis est!Lorem ipsum l lll ll dolor sit amet consectetur adipisicing elit. Ipsum excepturi impedit aspernatur aliquam. Harum, aliquid! Quos unde in quaerat? Enim expedita nobis veniam eligendi, vitae quas neque officiis corporis est!"
    return(
         <IOContext.Provider value={IO}>
+            <TimerView></TimerView>
             <GenerateText text={sample}/>
             <TextInput text ={sample}></TextInput>
         </IOContext.Provider>
@@ -74,7 +78,12 @@ function TextInput({text}:{text:string}){
             console.log("clicking")
             let colorSetter = io.text.get(count)//key is the index of text, value is the stateUpdater for that character
             if(colorSetter){
-                colorSetter("green")
+                if(io.timerColor)
+                    if(io.timerColor.current=="red"){
+                        colorSetter("red")
+                    }else if(io.timerColor.current=="green"){
+                        colorSetter("green")
+                    }
             }
             if (io.slider && io.slider.current) {
                 io.slider.current.scrollLeft
@@ -87,7 +96,7 @@ function TextInput({text}:{text:string}){
     return(
         <button style={{width:100,height:100, fontSize: '1rem'}} onClick={logic}>
                 change next letter color
-            </button>
+        </button>
     )
 }
 
