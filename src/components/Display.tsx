@@ -5,18 +5,19 @@ import { HorizontalScroll } from "./Carousel"
 import { TimerView } from "./Timer"
 
 export type IOHandler={
-    text: Map<number, Dispatch<SetStateAction<string>>>,
+    text?: RefObject<Map<number, Dispatch<SetStateAction<string>>>|null>,
     slider?: RefObject<HTMLDivElement | null>
     timerColor?: RefObject<string | null>
 }
-export const IOContext =  createContext<IOHandler>({text:new Map<number,Dispatch<SetStateAction<string>>>()}) 
+export const IOContext =  createContext<IOHandler>({}) 
 
 
 export function Display(){
     const text = new Map<number,Dispatch<SetStateAction<string>>>()
+    const textRef = useRef(text)
     const slider =  useRef<HTMLDivElement | null>(null);
     const timerColor = useRef("red") //only use refs at this level bc useStates will cause re-renders
-    const IO:IOHandler = {text,slider,timerColor}
+    const IO:IOHandler = {text:textRef,slider,timerColor}
     const sample = "   Lorem ipsum l lll ll dolor sit amet consectetur adipisicing elit. Ipsum excepturi impedit aspernatur aliquam. Harum, aliquid! Quos unde in quaerat? Enim expedita nobis veniam eligendi, vitae quas neque officiis corporis est!Lorem ipsum l lll ll dolor sit amet consectetur adipisicing elit. Ipsum excepturi impedit aspernatur aliquam. Harum, aliquid! Quos unde in quaerat? Enim expedita nobis veniam eligendi, vitae quas neque officiis corporis est!"
    return(
         <IOContext.Provider value={IO}>
@@ -31,14 +32,17 @@ function Character({id,value}:{id:number,value:string}){
     const [backgroundColor,setBackground]=useState("grey")
     useEffect(()=>{
         console.log("setting context vals")
-        io.text.set(id,setBackground)
+        if(io.text?.current){
+            io.text.current.set(id,setBackground)
+        }
     },[])
     return(
         <div style={{backgroundColor, 
             display: 'inline-block', // Ensures the text stays inline horizontally
             whiteSpace:'break-spaces',
             width:'30px',height:'30px',
-            fontSize: '24px'
+            fontSize: '24px',
+            
         }}>
                 {value}
         </div>
@@ -73,30 +77,36 @@ function GenerateText({text}:{text:string}){
 function TextInput({text}:{text:string}){
     const io = useContext(IOContext);
     let count = 3
-    function logic(){
-        {
-            console.log("clicking")
-            let colorSetter = io.text.get(count)//key is the index of text, value is the stateUpdater for that character
-            if(colorSetter){
-                if(io.timerColor)
-                    if(io.timerColor.current=="red"){
-                        colorSetter("red")
-                    }else if(io.timerColor.current=="green"){
-                        colorSetter("green")
-                    }
-            }
-            if (io.slider && io.slider.current) {
-                io.slider.current.scrollLeft
-                const scrollPosition =30; //this is the set width of the text divs
-                io.slider.current.scrollLeft += scrollPosition;
-            }
-            count++
+    const logic = (event:React.ChangeEvent<HTMLInputElement>) => {
+        //console.log(event.target.value)
+        if(!io.text?.current){
+            return
         }
-    }
+          let colorSetter = io.text.current.get(count);
+          console.log(count)
+          console.log(colorSetter)
+          if (colorSetter) {
+            if (io.timerColor && io.timerColor.current === "red") {
+                console.log("changing color to red")
+              colorSetter("red");
+            } else if (io.timerColor && io.timerColor.current === "green") {
+                console.log("changing color to green")
+              colorSetter("green");
+            }
+          }
+      
+          if (io.slider && io.slider.current) {
+            const scrollPosition = 30*count;
+            io.slider.current.scrollLeft = scrollPosition;
+            count++;
+          }
+      
+      };
     return(
-        <button style={{width:100,height:100, fontSize: '1rem'}} onClick={logic}>
-                change next letter color
-        </button>
+        <>
+        <input type="text" placeholder="Enter text here" style={{width:100,height:100, fontSize: '1rem', backgroundColor:"white"}} onChange={(e)=>logic(e)}>
+         </input>
+        </>
     )
 }
 
